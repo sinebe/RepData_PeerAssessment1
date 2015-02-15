@@ -16,7 +16,7 @@ library(ggplot2)
 
 ## Loading and preprocessing the data
 
-```{r echo=TRUE, cache=TRUE}
+```{r}
 ##setwd("setup_path_to_working_directory_to_execute_data_read")
 data <- read.table(unz("activity.zip", "activity.csv"), header=T,  sep=",")
 close(unz("activity.zip", "activity.csv"))
@@ -102,22 +102,17 @@ head(dataTr,5)
 
 dataTrGrp <- summarize(group_by(dataTr, date), sum(steps.impute))
 setnames(dataTrGrp, "sum(steps.impute)", "colstepsPerDay")
-par(mfcol = c(1,2))
 
 ## Histogram
-hist(stepsPerDay$colstepsPerDay, 
-     xlab="Total steps per day",  
-     main='NAs exluded')
-
 hist(dataTrGrp$colstepsPerDay,
       xlab="Total steps per day",
-     main = "NAs imputed")
+     main = "Histogram when NAs  are imputed")
 
 
 ## Mean/Median Differences
 ```
 
-```{r echo=FALSE}
+```{r}
 
 
 cat ("Mean when NAs are exluded: ", mean(stepsPerDay$colstepsPerDay))
@@ -137,7 +132,7 @@ cat ("Difference in Median: " ,median(stepsPerDay$colstepsPerDay) - median(dataT
 ## Are there differences in activity patterns between weekdays and weekends?
 
 
-```{r cache=TRUE}
+```{r}
 ##Prepare data
 weekday.f <- function (x) ifelse(x %in% c('Saturday', 'Sunday'), 'weekend', 'weekday') 
 
@@ -149,7 +144,7 @@ head(dataTr,5)
 ```
 
 
-```{r cache=TRUE}
+```{r}
 ##group data 
 weekDayDF <- summarize(group_by(dataTr, interval, weekend.weekday), mean(steps.impute))
 setnames(weekDayDF, "mean(steps.impute)", "meanSteps")

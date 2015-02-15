@@ -142,16 +142,11 @@ head(dataTr,5)
 ```r
 dataTrGrp <- summarize(group_by(dataTr, date), sum(steps.impute))
 setnames(dataTrGrp, "sum(steps.impute)", "colstepsPerDay")
-par(mfcol = c(1,2))
 
 ## Histogram
-hist(stepsPerDay$colstepsPerDay, 
-     xlab="Total steps per day",  
-     main='NAs exluded')
-
 hist(dataTrGrp$colstepsPerDay,
       xlab="Total steps per day",
-     main = "NAs imputed")
+     main = "Histogram when NAs  are imputed")
 ```
 
 ![](./PA1_template_files/figure-html/unnamed-chunk-6-1.png) 
@@ -161,24 +156,48 @@ hist(dataTrGrp$colstepsPerDay,
 ```
 
 
+```r
+cat ("Mean when NAs are exluded: ", mean(stepsPerDay$colstepsPerDay))
+```
+
 ```
 ## Mean when NAs are exluded:  10766.19
+```
+
+```r
+cat ("Mean when NAs are imputed using the average of interval: ",  mean(dataTrGrp$colstepsPerDay) )
 ```
 
 ```
 ## Mean when NAs are imputed using the average of interval:  10765.64
 ```
 
+```r
+cat ("Difference in Mean: " , mean(stepsPerDay$colstepsPerDay) - mean(dataTrGrp$colstepsPerDay))
+```
+
 ```
 ## Difference in Mean:  0.549335
+```
+
+```r
+cat ("Median when NA are exluded: ", median(stepsPerDay$colstepsPerDay) )
 ```
 
 ```
 ## Median when NA are exluded:  10765
 ```
 
+```r
+cat ("Mean when NA are imputed using the average of interval: ",  median(dataTrGrp$colstepsPerDay) )
+```
+
 ```
 ## Mean when NA are imputed using the average of interval:  10762
+```
+
+```r
+cat ("Difference in Median: " ,median(stepsPerDay$colstepsPerDay) - median(dataTrGrp$colstepsPerDay))
 ```
 
 ```
