@@ -6,20 +6,161 @@ output:
 ---
 
 
+
+```{r message=FALSE, warning=FALSE}
+library(plyr)
+library(dplyr)
+library(data.table)
+library(ggplot2)
+```
+
 ## Loading and preprocessing the data
+
+```{r echo=TRUE, cache=TRUE}
+##setwd("setup_path_to_working_directory_to_execute_data_read")
+data <- read.table(unz("activity.zip", "activity.csv"), header=T,  sep=",")
+close(unz("activity.zip", "activity.csv"))
+data <-data.table(data)
+
+```
 
 
 
 ## What is mean total number of steps taken per day?
+```{r}
+
+##Exclude Nas for this exercise
+dataNa <- data[!is.na(data$steps),]
+
+#Summarize dataset. Calculate total number of steps per day
+stepsPerDay <- summarize(group_by(dataNa, date), sum(steps))
+setnames(stepsPerDay, "sum(steps)", "colstepsPerDay")
+head(stepsPerDay,5)
+
+#create histogram
+hist(stepsPerDay$colstepsPerDay, xlab="Total steps per day",  main='Number of steps taken per day (NA are exluded)')
+
+#mean and median
+average <- mean(stepsPerDay$colstepsPerDay)
+med <- median(stepsPerDay$colstepsPerDay)
+
+cat("Average is equal to: ", average, " Median is equal to: ", med  )
+```
+
+
 
 
 
 ## What is the average daily activity pattern?
+```{r}
+##Average by interval
+meanSteps <- summarize(group_by(dataNa, interval), mean(steps))
+setnames(meanSteps, "mean(steps)", "meanSteps")
 
+##Create line plot
+plot(meanSteps$interval, meanSteps$meanSteps, type='l', 
+     xlab='intervals',
+     ylab = 'Average steps',
+     main= 'Average steps by interval'
+     )
+
+## Which inteval has the highest average?
+
+cat("Interval: " ,meanSteps$interval[which.max(meanSteps$meanSteps)])
+```
 
 
 ## Imputing missing values
 
 
 
+```{r}
+## How many NAs in the dataset?
+cat("Number of NAs: ", sum(is.na(data$steps)))
+
+##Logic to Impute NAs
+##=====================================================================================
+##Short Description:
+##  use average by interval as filling value for NAs rounded and casted to integer value.
+##  For example value < 0.5 will be = 0; Value = 0.6 will be = 1 
+##=====================================================================================
+
+##Create dataset with new imputed steps per day
+impute.mean <- function(x) replace(x, is.na(x), round(mean(x, na.rm = TRUE)))
+dataTr <- ddply(data, ~ interval, transform, steps.impute = as.integer(impute.mean(steps)))
+dataTr <- dataTr[order(dataTr$date, dataTr$interval),]
+dataTr <- data.table(dataTr)
+
+#Data Sample
+head(dataTr,5)
+```
+
+
+##### Differences
+
+```{r}
+
+dataTrGrp <- summarize(group_by(dataTr, date), sum(steps.impute))
+setnames(dataTrGrp, "sum(steps.impute)", "colstepsPerDay")
+par(mfcol = c(1,2))
+
+## Histogram
+hist(stepsPerDay$colstepsPerDay, 
+     xlab="Total steps per day",  
+     main='NAs exluded')
+
+hist(dataTrGrp$colstepsPerDay,
+      xlab="Total steps per day",
+     main = "NAs imputed")
+
+
+## Mean/Median Differences
+```
+
+```{r echo=FALSE}
+
+
+cat ("Mean when NAs are exluded: ", mean(stepsPerDay$colstepsPerDay))
+cat ("Mean when NAs are imputed using the average of interval: ",  mean(dataTrGrp$colstepsPerDay) )
+
+cat ("Difference in Mean: " , mean(stepsPerDay$colstepsPerDay) - mean(dataTrGrp$colstepsPerDay))
+
+cat ("Median when NA are exluded: ", median(stepsPerDay$colstepsPerDay) )
+cat ("Mean when NA are imputed using the average of interval: ",  median(dataTrGrp$colstepsPerDay) )
+
+cat ("Difference in Median: " ,median(stepsPerDay$colstepsPerDay) - median(dataTrGrp$colstepsPerDay))
+
+```
+
+
+
 ## Are there differences in activity patterns between weekdays and weekends?
+
+
+```{r cache=TRUE}
+##Prepare data
+weekday.f <- function (x) ifelse(x %in% c('Saturday', 'Sunday'), 'weekend', 'weekday') 
+
+dataTr$days <- weekdays(as.Date(dataTr$date))
+dataTr$weekend.weekday <- as.factor(weekday.f(weekdays(as.Date(dataTr$date))))
+
+#Data sample
+head(dataTr,5)
+```
+
+
+```{r cache=TRUE}
+##group data 
+weekDayDF <- summarize(group_by(dataTr, interval, weekend.weekday), mean(steps.impute))
+setnames(weekDayDF, "mean(steps.impute)", "meanSteps")
+
+#plot data
+qplot(interval, meanSteps,
+      data=weekDayDF,
+      facets=weekend.weekday~.,
+      geom = "line",
+      ylab = "Averege Step",
+      xlab = "Intervals",
+      main = "Weekday vs Weekend: Average step by Interval")  
+
+```
